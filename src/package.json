@@ -1,0 +1,8 @@
+{
+  "name": "jozve-mabani-eghtesad",
+  "private": true,
+  "description": "Build tools for the Persian economics booklet",
+  "dependencies": {
+    "katex": "0.16.11"
+  }
+}
