@@ -3,7 +3,8 @@
 جزوه کامل فارسی بخش اول درس **مبانی اقتصاد** (اقتصاد خرد، ۷۹ اسلاید)، بر پایه اسلایدهای درس دکتر علی ابراهیم‌نژاد (دانشگاه صنعتی شریف). جزوه دانشجویی و غیررسمی است.
 
 - **نسخه PDF:** [`jozve-mabani-eghtesad.pdf`](jozve-mabani-eghtesad.pdf) (۱۱۵ صفحه، راست‌به‌چپ، با فهرست صفحه‌دار و بوکمارک)
-- **نسخه وب:** [`index.html`](index.html) (با فهرست کناری، حالت تیره، و پاسخ‌های بازشونده)
+- **نسخه وب:** https://iamhirad.github.io/economic-/ (با فهرست کناری، حالت تیره، و پاسخ‌های بازشونده)
+- **پاسخ تمرین سری اول:** https://iamhirad.github.io/economic-/ps01/ ([PDF](ps01/ps01-pasokh.pdf))
 
 ## محتوا
 
@@ -20,7 +21,7 @@
 
 ## نمایش به‌صورت صفحه وب (GitHub Pages)
 
-در تنظیمات مخزن: **Settings → Pages → Build and deployment → Source: Deploy from a branch**، شاخه‌ای که این فایل‌ها در آن است و پوشه `/ (root)` را انتخاب کنید. بعد از چند دقیقه جزوه در آدرس `https://iamhirad.github.io/economic-/` در دسترس است.
+سایت از شاخه پیش‌فرض همین مخزن منتشر می‌شود: `https://iamhirad.github.io/economic-/`. هر push به این شاخه، سایت را به‌روز می‌کند.
 
 ## ساختن دوباره
 
@@ -30,5 +31,6 @@
 cd src
 npm install                 # KaTeX برای فرمول‌ها
 pip install pypdf
-python3 build.py --pdf      # index.html و PDF را می‌سازد (به Playwright/Chromium نیاز دارد)
+python3 build.py --pdf      # index.html و PDF جزوه را می‌سازد (به Playwright/Chromium نیاز دارد)
+python3 build_ps.py ps01    # صفحه و PDF پاسخ تمرین سری اول (منبع: src/ps/ps01.html)
 ```

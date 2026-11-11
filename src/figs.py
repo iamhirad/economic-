@@ -958,3 +958,47 @@ FIGS = {
     'ext_neg': lambda: fig_ext('neg'),
     'ext_pos': lambda: fig_ext('pos'),
 }
+
+
+# ----------------------------------------------------------------------------
+# Problem set 1
+# ----------------------------------------------------------------------------
+
+def fig_ps1_ppf():
+    g = Graph(46, 46, w=540, h=430, ml=60, xlabel='خودروهای شسته‌شده در روز', ylabel='چمن‌های زده‌شده در روز')
+    pts = [(0, 40), (20, 30), (30, 20), (40, 0)]
+    g.poly([(0, 0)] + pts, 'acc')
+    g.path(pts, 'k')
+    g.guide(20, 20); g.guide(25, 25)
+    g.line(0, 30, 20, 30, 'gd', 'mid'); g.line(20, 0, 20, 30, 'gd', 'mid')
+    g.line(0, 20, 30, 20, 'gd', 'mid'); g.line(30, 0, 30, 20, 'gd', 'mid')
+    for v in (20, 25, 30, 40):
+        g.tickx(v, fa(v)); g.ticky(v, fa(v))
+    g.dot(0, 40); g.text(0, 40, mi('A'), '', 'start', 10, -8)
+    g.dot(40, 0); g.text(40, 0, mi('B'), '', 'start', 8, -10)
+    g.dot(20, 20, 'dotx'); g.text(20, 20, mi('C'), '', 'end', -8, 18)
+    g.dot(25, 25); g.text(25, 25, mi('D'), '', 'start', 9, -8)
+    g.dot(20, 30, 'dots'); g.dot(30, 20, 'dots')
+    g.arrow(20.9, 20.9, 24.1, 24.1, 'arr', head=7)
+    g.text(9, 35.5, 'محمد: هر خودرو = ۰٫۵ چمن', 'tsm', 'start', 4, -12)
+    g.text(26, 24, 'علی: ۱ چمن', 'tsm', 'start', 18, -2)
+    g.text(35, 10, 'کریم: ۲ چمن', 'tsm', 'start', 8, 0)
+    g.text(12, 9, 'محدوده قابل تولید', 'tsm', 'middle')
+    return g.svg('مرز امکانات تولید اقتصاد سه‌نفره')
+
+
+def fig_total_surplus():
+    g = base_graph()
+    g.poly([(0, 800), (3000, 500), (0, 500)], 'cs')
+    g.poly([(0, 200), (3000, 500), (0, 500)], 'ps')
+    draw_base(g)
+    g.guide(3000, 500); g.dot(3000, 500)
+    g.ticky(500, fa(500)); g.tickx(3000, fa(3000))
+    g.text(900, 580, 'مازاد مصرف‌کننده', 'tsm', 'middle')
+    g.text(900, 420, 'مازاد تولیدکننده', 'tsm', 'middle')
+    g.text(3000, 500, 'MB = P = MC', 'tk', 'start', 12, 4)
+    return g.svg('مازاد کل در تعادل رقابتی')
+
+
+FIGS['ps1_ppf'] = fig_ps1_ppf
+FIGS['total_surplus'] = fig_total_surplus
