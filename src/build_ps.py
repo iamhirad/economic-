@@ -18,6 +18,16 @@ SETS = {
         'meta': 'استاد: دکتر علی ابراهیم‌نژاد · نیم‌سال اول ۱۴۰۵–۱۴۰۶ · پاسخ پیشنهادی (دانشجویی و غیررسمی)',
         'pdf': 'ps01-pasokh.pdf',
         'header': 'پاسخ تمرین سری اول · مبانی اقتصاد',
+        'short': 'سری اول',
+    },
+    'ps02': {
+        'title': 'پاسخ تمرین سری دوم',
+        'eyebrow': 'درس مبانی اقتصاد · تمرین سری دوم',
+        'sub': 'پاسخ تشریحی هر شش سؤال: کشش و درآمد کل، بازار بنزین و کالاهای مرتبط، تعادل و کشش نقطه‌ای، کشش کوتاه‌مدت و بلندمدت، اثبات کشش ثابت، و بازگشت بازار به تعادل.',
+        'meta': 'استاد: دکتر علی ابراهیم‌نژاد · نیم‌سال اول ۱۴۰۵–۱۴۰۶ · پاسخ پیشنهادی (دانشجویی و غیررسمی)',
+        'pdf': 'ps02-pasokh.pdf',
+        'header': 'پاسخ تمرین سری دوم · مبانی اقتصاد',
+        'short': 'سری دوم',
     },
 }
 
@@ -35,8 +45,9 @@ def head(cfg, extra=''):
     return h.replace(f'<title>{B.TITLE}</title>', f'<title>{cfg["title"]}</title>', 1)
 
 
-def web(cfg, content, entries):
+def web(cfg, content, entries, name):
     toc = B.toc_web(entries)
+    others = ''.join(f'<a class="btn" href="../{k}/">پاسخ تمرین {v["short"]}</a>' for k, v in SETS.items() if k != name)
     mast = f'''<header class="mast">
 {B.MARK}
 <div class="mast-text">
@@ -47,6 +58,7 @@ def web(cfg, content, entries):
 <div class="actions web-only">
 <a class="btn primary" href="{cfg['pdf']}" target="_blank" rel="noopener">نسخه PDF</a>
 <a class="btn" href="../">جزوه اقتصاد خرد</a>
+{others}
 </div>
 </div>
 </header>'''
@@ -63,7 +75,7 @@ def web(cfg, content, entries):
 </div>'''
 
 
-def main(name):
+def main(name, pdf_too=True):
     cfg = SETS[name]
     src = (B.ROOT / 'ps' / f'{name}.html').read_text(encoding='utf-8')
     content = render(src)
@@ -71,13 +83,16 @@ def main(name):
     outdir = B.REPO / name
     outdir.mkdir(exist_ok=True)
     wcss = '@media screen { #%s > .ch-head { display: none; } }' % name.replace('ps0', 'ps')
-    (outdir / 'index.html').write_text(B.full_doc(head(cfg, wcss), web(cfg, content, entries)), encoding='utf-8')
+    (outdir / 'index.html').write_text(B.full_doc(head(cfg, wcss), web(cfg, content, entries, name)), encoding='utf-8')
 
     # print version: no cover, own running header
     pcss = ('@page { @top-left { content: "%s"; } }\n'
             '.ps-meta { color: var(--ink-2); font-size: 9.5pt; margin: 4px 0 0; }\n'
             '@media print { #%s { break-before: auto; } }' % (cfg['header'], name.replace('ps0', 'ps')))
     body = f'<div class="book" dir="rtl" lang="fa"><div class="layout"><main>{content}</main></div></div>'
+    if not pdf_too:
+        print(f'{name}: web page only ({len(entries)} headings)')
+        return
     prn = B.OUT / f'{name}-print.html'
     prn.write_text(B.full_doc(head(cfg, pcss), body, 'print'), encoding='utf-8')
     pdf = outdir / cfg['pdf']
@@ -114,4 +129,6 @@ def main(name):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1] if len(sys.argv) > 1 else 'ps01')
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    for nm in (args or list(SETS)):
+        main(nm, pdf_too='--no-pdf' not in sys.argv)

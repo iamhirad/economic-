@@ -5,6 +5,7 @@
 - **نسخه PDF:** [`jozve-mabani-eghtesad.pdf`](jozve-mabani-eghtesad.pdf) (۱۱۵ صفحه، راست‌به‌چپ، با فهرست صفحه‌دار و بوکمارک)
 - **نسخه وب:** https://iamhirad.github.io/economic-/ (با فهرست کناری، حالت تیره، و پاسخ‌های بازشونده)
 - **پاسخ تمرین سری اول:** https://iamhirad.github.io/economic-/ps01/ ([PDF](ps01/ps01-pasokh.pdf))
+- **پاسخ تمرین سری دوم:** https://iamhirad.github.io/economic-/ps02/ ([PDF](ps02/ps02-pasokh.pdf))
 
 ## محتوا
 
@@ -32,5 +33,6 @@ cd src
 npm install                 # KaTeX برای فرمول‌ها
 pip install pypdf
 python3 build.py --pdf      # index.html و PDF جزوه را می‌سازد (به Playwright/Chromium نیاز دارد)
-python3 build_ps.py ps01    # صفحه و PDF پاسخ تمرین سری اول (منبع: src/ps/ps01.html)
+python3 build_ps.py ps02    # صفحه و PDF پاسخ تمرین سری دوم (منبع: src/ps/ps02.html)
+python3 build_ps.py --no-pdf  # فقط صفحه‌های وب همه تمرین‌ها (بدون ساخت دوباره PDF)
 ```

@@ -202,7 +202,7 @@ MARK = ('<svg class="mast-mark" viewBox="0 0 92 92" aria-hidden="true" xmlns="ht
         '<circle cx="50" cy="44" r="5" fill="currentColor"/></svg>')
 
 
-def masthead(pdf_href, ps_href='ps01/'):
+def masthead(pdf_href, ps_href='ps01/', ps2_href='ps02/'):
     return f'''<header class="mast">
 {MARK}
 <div class="mast-text">
@@ -213,6 +213,7 @@ def masthead(pdf_href, ps_href='ps01/'):
 <div class="actions web-only">
 <a class="btn primary" href="{pdf_href}" target="_blank" rel="noopener">نسخه PDF</a>
 <a class="btn" href="{ps_href}">پاسخ تمرین سری اول</a>
+<a class="btn" href="{ps2_href}">پاسخ تمرین سری دوم</a>
 <button class="btn" type="button" id="toggle-sol">باز کردن همه پاسخ‌ها</button>
 </div>
 </div>
@@ -273,10 +274,10 @@ def head_bits(extra_css=''):
             f'<style>{KATEX_CSS}\n{STYLE}\n{extra_css}</style>\n')
 
 
-def web_body(content, entries, pdf_href, ps_href='ps01/'):
+def web_body(content, entries, pdf_href, ps_href='ps01/', ps2_href='ps02/'):
     toc = toc_web(entries)
     return f'''<div class="book" dir="rtl" lang="fa">
-{masthead(pdf_href, ps_href)}
+{masthead(pdf_href, ps_href, ps2_href)}
 <div class="layout">
 <nav class="toc" aria-label="فهرست مطالب"><h2>فهرست مطالب</h2>{toc}</nav>
 <main>
@@ -330,7 +331,7 @@ def write_outputs(content, entries, pages=None):
     pdf_gh = f'{REPO_URL}/blob/{BRANCH}/{PDF_NAME}'
     index = full_doc(head_bits(), web_body(content, entries, pdf_rel))
     (REPO / 'index.html').write_text(index, encoding='utf-8')
-    artifact = head_bits() + web_body(content, entries, pdf_gh, 'https://iamhirad.github.io/economic-/ps01/')
+    artifact = head_bits() + web_body(content, entries, pdf_gh, 'https://iamhirad.github.io/economic-/ps01/', 'https://iamhirad.github.io/economic-/ps02/')
     (OUT / 'artifact.html').write_text(artifact, encoding='utf-8')
     pr = full_doc(head_bits(), print_body(content, entries, pages), 'print')
     (OUT / 'print.html').write_text(pr, encoding='utf-8')

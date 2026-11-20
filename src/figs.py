@@ -1002,3 +1002,171 @@ def fig_total_surplus():
 
 FIGS['ps1_ppf'] = fig_ps1_ppf
 FIGS['total_surplus'] = fig_total_surplus
+
+
+# ----------------------------------------------------------------------------
+# Problem set 2
+# ----------------------------------------------------------------------------
+GD = lambda q: 5.5 - 0.5 * q       # gasoline demand, Pt = 1   (Q = 11 - 2P)
+GD2 = lambda q: 5.25 - 0.5 * q     # gasoline demand, Pt = 0.5 (Q = 10.5 - 2P)
+GS = lambda q: q - 10              # supply Q = 10 + P
+GS2 = lambda q: q - 5              # supply Q = 5 + P
+
+
+def fig_ps2_q1():
+    g = Graph(150, 15.5, w=560, h=400, ml=56, xlabel='مقدار', ylabel='قیمت')
+    g.rect(0, 0, 80, 10, 'acc')
+    g.rect(0, 10, 80, 12, 'rev')
+    g.rect(80, 0, 100, 10, 'dwl')
+    g.fn(lambda q: 20 - 0.1 * q, 62, 112, 'd')
+    g.line(0, 10, 100, 10, 'gd', 'mid'); g.line(0, 12, 80, 12, 'gd', 'mid')
+    g.line(80, 0, 80, 12, 'gd', 'mid'); g.line(100, 0, 100, 10, 'gd', 'mid')
+    g.dot(100, 10); g.dot(80, 12)
+    for v in (10, 12):
+        g.ticky(v, fa(v))
+    for v in (80, 100):
+        g.tickx(v, fa(v))
+    g.text(40, 11, 'درآمد اضافه: ۲ × ۸۰ = ۱۶۰', 'tsm', 'middle', 0, 4)
+    g.text(40, 5, 'درآمد مشترک: ۱۰ × ۸۰ = ۸۰۰', 'tsm')
+    g.text(126, 5.2, 'درآمد از دست رفته', 'tsm', 'middle')
+    g.text(126, 4.0, '۲۰ × ۱۰ = ۲۰۰', 'tsm', 'middle')
+    g.arrow(110, 4.9, 101, 4.9, 'arr2', head=6)
+    g.text(112, 8.8, mi('D'), 'td', 'start', 6, 4)
+    return g.svg('درآمد کل قبل و بعد از افزایش قیمت')
+
+
+def fig_ps2_gas_eq():
+    g = Graph(13.5, 6.2, w=560, h=400, ml=56, xlabel='مقدار بنزین', ylabel='قیمت بنزین')
+    g.fn(GD, 0, 11, 'd')
+    g.fn(GS, 10, 13.2, 's')
+    g.guide(31 / 3, 1 / 3); g.dot(31 / 3, 1 / 3)
+    g.dot(10, 0, 'dots'); g.dot(11, 0, 'dots')
+    g.tickx(10, fa(10)); g.tickx(11, fa(11)); g.tickx(31 / 3, fa(10.33), dy=15)
+    g.ticky(1 / 3, '۱/۳'); g.ticky(5.5, fa(5.5))
+    g.text(31 / 3, 1 / 3, mi('E'), '', 'start', 9, -10)
+    g.text(1.4, GD(1.4), mi('D'), 'td', 'start', 8, -6)
+    g.text(1.4, GD(1.4), 'Q = 11 − 2P', 'td', 'start', 30, -6)
+    g.text(13.2, GS(13.2), mi('S'), 'ts', 'start', 6, 4)
+    g.text(12.2, GS(12.2), 'Q = 10 + P', 'ts', 'end', -10, 6)
+    return g.svg('تعادل بازار بنزین')
+
+
+def fig_ps2_gas_demand():
+    g1 = Graph(13.5, 6.2, w=440, h=340, ml=50, xlabel='مقدار بنزین', ylabel='قیمت')
+    g1.fn(GD, 0, 11, 'k2d'); g1.fn(GD2, 0, 10.5, 'd'); g1.fn(GS, 10, 13.2, 's')
+    g1.path([(9.6, 0), (10.9, 0), (10.9, 0.78), (9.6, 0.78), (9.6, 0)], 'pl')
+    g1.tickx(5, fa(5)); g1.ticky(5.5, fa(5.5)); g1.ticky(5.25, fa(5.25), 'tl') if False else None
+    g1.text(2.2, GD(2.2), mi('D'), 'td', 'start', 8, -10)
+    g1.text(2.2, GD2(2.2), mi('D′'), 'td', 'start', 4, 40)
+    g1.text(13.2, GS(13.2), mi('S'), 'ts', 'start', 6, 4)
+    g1.text(9.4, 1.9, 'ناحیه بزرگ‌شده', 'tsm', 'middle')
+    g1.arrow(10.2, 1.55, 10.2, 0.88, 'arr2', head=6)
+    g2 = Graph(10.9, 0.78, xmin=9.6, w=440, h=340, ml=50, xlabel='مقدار بنزین', ylabel='قیمت')
+    g2.fn(GD, 9.6, 10.9, 'k2d'); g2.fn(GD2, 9.6, 10.5, 'd'); g2.fn(GS, 10, 10.75, 's')
+    e0, e1 = (31 / 3, 1 / 3), (61 / 6, 1 / 6)
+    g2.guide(*e0); g2.guide(*e1)
+    g2.dot(*e0, 'dots'); g2.dot(*e1)
+    for x in (10, 10.5):
+        g2.tickx(x, fa(x))
+    g2.tickx(e1[0], fa(10.17), dy=15); g2.tickx(e0[0], fa(10.33), dy=15)
+    g2.ticky(e0[1], '۱/۳'); g2.ticky(e1[1], '۱/۶')
+    g2.text(e0[0], e0[1], mi('E', '0'), '', 'start', 9, -9)
+    g2.text(e1[0], e1[1], mi('E', '1'), '', 'start', 9, 18)
+    g2.text(9.68, GD(9.68), mi('D'), 'td', 'start', 6, -6)
+    g2.text(9.68, GD2(9.68), mi('D′'), 'td', 'start', 4, 40)
+    g2.text(10.72, GS(10.72), mi('S'), 'ts', 'start', 6, 4)
+    return panels((g1.svg('نمای کامل'), 'الف) نمای کامل: خط‌چین قرمز تقاضای قدیم، خط پیوسته قرمز تقاضای جدید. مستطیل خط‌چین ناحیه بزرگ‌شده است.'),
+                  (g2.svg('نمای بزرگ‌شده'), 'ب) نمای بزرگ‌شده (محور افقی از ۹٫۶ شروع می‌شود): تعادل از E₀ به E₁ می‌رود.'))
+
+
+def fig_ps2_gas_supply():
+    g = Graph(13.5, 6.2, w=560, h=400, ml=56, xlabel='مقدار بنزین', ylabel='قیمت بنزین')
+    g.fn(GD, 0, 11, 'd')
+    g.fn(GS, 10, 13.2, 'k2s'); g.fn(GS2, 5, 11.2, 's')
+    e0, e1 = (31 / 3, 1 / 3), (7, 2)
+    g.guide(*e0); g.guide(*e1)
+    g.dot(*e0, 'dots'); g.dot(*e1)
+    g.tickx(5, fa(5)); g.tickx(7, fa(7)); g.tickx(e0[0], fa(10.33), dy=15)
+    g.ticky(1 / 3, '۱/۳'); g.ticky(2, fa(2)); g.ticky(5.5, fa(5.5))
+    g.text(e0[0], e0[1], mi('E', '0'), '', 'start', 9, -10)
+    g.text(e1[0], e1[1], mi('E', '1'), '', 'start', 9, -10)
+    g.text(1.4, GD(1.4), mi('D'), 'td', 'start', 8, -6)
+    g.text(13.2, GS(13.2), mi('S', '0'), 'ts', 'start', 6, 4)
+    g.text(11.2, GS2(11.2), mi('S', '1'), 'ts', 'start', 6, 4)
+    g.arrow(12.6, 3, 8.4, 3, 'arr')
+    g.text(10.5, 3, 'کاهش عرضه', 'tsm', 'middle', 0, -8)
+    return g.svg('کاهش عرضه بنزین')
+
+
+def fig_ps2_q3():
+    g = Graph(190, 66, w=560, h=400, ml=52, xlabel='مقدار', ylabel='قیمت')
+    d0 = lambda q: 50 - q / 3
+    d1 = lambda q: 60 - q / 3
+    s = lambda q: (q - 30) / 2
+    g.fn(d0, 0, 150, 'k2d'); g.fn(d1, 0, 180, 'd'); g.fn(s, 30, 160, 's')
+    g.guide(78, 24); g.guide(90, 30)
+    g.line(0, 24, 108, 24, 'gd', 'mid')
+    g.dot(78, 24, 'dots'); g.dot(90, 30); g.dot(108, 24, 'dots')
+    for v in (24, 30):
+        g.ticky(v, fa(v))
+    g.tickx(78, fa(78)); g.tickx(90, fa(90)); g.tickx(108, fa(108))
+    g.text(78, 24, mi('E', '0'), '', 'end', -12, 5)
+    g.text(90, 30, mi('E', '1'), '', 'middle', 0, -12)
+    g.bracket(78, 108, 24, '', dy=0)
+    g.text(108, 24, 'کمبود: ۳۰', 'tsm', 'start', 8, -8)
+    g.text(5, d0(5), mi('D'), 'td', 'start', 8, -8)
+    g.text(5, d1(5), mi('D′'), 'td', 'start', 8, -8)
+    g.text(160, 65, mi('S'), 'ts', 'start', 6, 4)
+    return g.svg('تعادل بازار و افزایش تقاضا')
+
+
+def fig_ps2_const_elast():
+    import numpy as np
+    g = Graph(110, 10.8, w=560, h=400, ml=52, xlabel='مقدار (Q)', ylabel='قیمت (p)')
+    ps = np.linspace(1, 10, 90)
+    for eps, cls in ((-0.5, 'k'), (-1, 's'), (-2, 'd')):
+        g.path([(100 * p ** eps, p) for p in ps], cls)
+    g.dot(50, 2); g.dot(20, 5)
+    g.guide(50, 2); g.guide(20, 5)
+    for v in (2, 5, 8):
+        g.ticky(v, fa(v))
+    for v in (20, 50, 100):
+        g.tickx(v, fa(v))
+    g.text(50, 2, 'E = −1', 'tk', 'start', 9, -8)
+    g.text(20, 5, 'E = −1', 'tk', 'start', 9, -8)
+    g.text(100 * 8.2 ** -0.5, 8.2, 'ε = −0.5', 'tk', 'start', 10, 4)
+    g.text(100 / 8.2, 8.2, 'ε = −1', 'ts', 'start', 10, 4)
+    g.text(100 * 3.6 ** -2, 3.6, 'ε = −2', 'td', 'start', 10, 4)
+    return g.svg('منحنی‌های تقاضا با کشش ثابت')
+
+
+PZ = [(4, 135, 26), (5, 104, 53), (6, 81, 81), (7, 68, 98), (8, 53, 110), (9, 39, 121)]
+
+
+def fig_ps2_pizza():
+    g = Graph(150, 10, w=560, h=420, ml=52, ymin=3, xlabel='تعداد پیتزا', ylabel='قیمت (دلار)')
+    g.path([(qd, p) for p, qd, qs in PZ], 'd')
+    g.path([(qs, p) for p, qd, qs in PZ], 's')
+    for p, qd, qs in PZ:
+        g.dot(qd, p, 'dots'); g.dot(qs, p, 'dots')
+        g.ticky(p, fa(p))
+    g.guide(81, 6); g.dot(81, 6)
+    g.line(0, 8, 110, 8, 'gd', 'mid'); g.line(0, 5, 104, 5, 'gd', 'mid')
+    for v in (25, 50, 100, 125, 150):
+        g.tickx(v, fa(v))
+    g.tickx(81, fa(81), dy=14)
+    g.text(81, 6, mi('E'), '', 'start', 9, -9)
+    g.bracket(53, 110, 8, 'مازاد عرضه در قیمت ۸: ۵۷', dy=-34)
+    g.bracket(53, 104, 5, 'کمبود در قیمت ۵: ۵۱', dy=28)
+    g.text(39, 9, mi('D'), 'td', 'end', -8, -4)
+    g.text(121, 9, mi('S'), 'ts', 'start', 8, -4)
+    return g.svg('بازار پیتزا')
+
+
+FIGS['ps2_q1'] = fig_ps2_q1
+FIGS['ps2_gas_eq'] = fig_ps2_gas_eq
+FIGS['ps2_gas_demand'] = fig_ps2_gas_demand
+FIGS['ps2_gas_supply'] = fig_ps2_gas_supply
+FIGS['ps2_q3'] = fig_ps2_q3
+FIGS['ps2_const_elast'] = fig_ps2_const_elast
+FIGS['ps2_pizza'] = fig_ps2_pizza

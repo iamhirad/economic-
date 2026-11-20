@@ -144,6 +144,7 @@ tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--accent) 4%, t
 td.c, th.c { text-align: center; }
 td.num { direction: ltr; unicode-bidi: isolate; }
 .nw { white-space: nowrap; }
+.sumtab td > div + div { margin-top: .25em; }
 caption { caption-side: bottom; font-size: .82rem; color: var(--ink-2); padding-top: 6px; text-align: start; }
 
 /* ---------- figures ---------- */
