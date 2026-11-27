@@ -2,6 +2,7 @@
 """Build the problem-set answer pages.
 
 Usage:  python3 build_ps.py ps01          ->  ../ps01/index.html and ../ps01/<pdf>
+        python3 build_ps.py fasl5-masahat ->  the chapter-5 areas guide (source: src/guides/)
 Reuses the booklet's style, KaTeX rendering, figures and Persian-digit pass (build.py).
 """
 import re
@@ -29,7 +30,34 @@ SETS = {
         'header': 'پاسخ تمرین سری دوم · مبانی اقتصاد',
         'short': 'سری دوم',
     },
+    'ps03': {
+        'title': 'پاسخ تمرین سری سوم',
+        'eyebrow': 'درس مبانی اقتصاد · تمرین سری سوم',
+        'sub': 'پاسخ تشریحی هر پنج سؤال: کف قیمت و کشش تقاضا، مالیات و منحنی لافر، یارانه اجاره در برابر افزایش عرضه مسکن، انتخاب تعرفه تلفن همراه، و بیمه درمان و کژمنشی.',
+        'meta': 'استاد: دکتر علی ابراهیم‌نژاد · نیم‌سال اول ۱۴۰۵–۱۴۰۶ · پاسخ پیشنهادی (دانشجویی و غیررسمی)',
+        'pdf': 'ps03-pasokh.pdf',
+        'header': 'پاسخ تمرین سری سوم · مبانی اقتصاد',
+        'short': 'سری سوم',
+    },
+    'fasl5-masahat': {
+        'src': 'guides/fasl5-masahat.html',
+        'title': 'مساحت‌ها در فصل ۵',
+        'eyebrow': 'درس مبانی اقتصاد · راهنمای تکمیلی فصل ۵',
+        'sub': 'مازاد مصرف‌کننده، مازاد تولیدکننده، سهم دولت و زیان رفاهی را در همه موانع کارایی فصل ۵ از روی نمودار پیدا کنید: سقف و کف قیمت، مالیات، یارانه، سهمیه، تعرفه و پیامد خارجی، به‌اضافه حالت‌های کاملاً بی‌کشش و کاملاً باکشش.',
+        'meta': 'همه مثال‌ها روی بازار پایه فصل ۴ و ۵ جزوه · راهنمای دانشجویی و غیررسمی',
+        'pdf': 'fasl5-masahat.pdf',
+        'header': 'مساحت‌ها در فصل ۵ · مبانی اقتصاد',
+        'btn': 'راهنمای مساحت‌های فصل ۵',
+        'toc': 'فهرست',
+        'foot': 'راهنمای دانشجویی، غیررسمی، بر پایه جزوه و اسلایدهای درس. در صورت تفاوت، ملاک گفته‌های استاد و دستیار آموزشی است.',
+    },
 }
+
+FOOT = 'پاسخ پیشنهادی دانشجویی، غیررسمی. در صورت تفاوت با پاسخ رسمی درس، ملاک پاسخ دستیار آموزشی و استاد است.'
+
+
+def btn_label(cfg):
+    return cfg.get('btn', f'پاسخ تمرین {cfg.get("short", "")}')
 
 
 def render(src):
@@ -47,7 +75,8 @@ def head(cfg, extra=''):
 
 def web(cfg, content, entries, name):
     toc = B.toc_web(entries)
-    others = ''.join(f'<a class="btn" href="../{k}/">پاسخ تمرین {v["short"]}</a>' for k, v in SETS.items() if k != name)
+    others = ''.join(f'<a class="btn" href="../{k}/">{btn_label(v)}</a>' for k, v in SETS.items() if k != name)
+    toc_title = cfg.get('toc', 'فهرست پاسخ‌ها')
     mast = f'''<header class="mast">
 {B.MARK}
 <div class="mast-text">
@@ -65,25 +94,30 @@ def web(cfg, content, entries, name):
     return f'''<div class="book" dir="rtl" lang="fa">
 {mast}
 <div class="layout">
-<nav class="toc" aria-label="فهرست"><h2>فهرست پاسخ‌ها</h2>{toc}</nav>
+<nav class="toc" aria-label="فهرست"><h2>{toc_title}</h2>{toc}</nav>
 <main>
-<details class="toc-m"><summary>فهرست پاسخ‌ها</summary>{toc}</details>
+<details class="toc-m"><summary>{toc_title}</summary>{toc}</details>
 {content}
 </main>
 </div>
-<footer class="foot">پاسخ پیشنهادی دانشجویی، غیررسمی. در صورت تفاوت با پاسخ رسمی درس، ملاک پاسخ دستیار آموزشی و استاد است.</footer>
+<footer class="foot">{cfg.get('foot', FOOT)}</footer>
 </div>'''
 
 
 def main(name, pdf_too=True):
     cfg = SETS[name]
-    src = (B.ROOT / 'ps' / f'{name}.html').read_text(encoding='utf-8')
+    src = (B.ROOT / cfg.get('src', f'ps/{name}.html')).read_text(encoding='utf-8')
     content = render(src)
     entries = B.toc_entries(content)
     outdir = B.REPO / name
     outdir.mkdir(exist_ok=True)
     wcss = '@media screen { #%s > .ch-head { display: none; } }' % name.replace('ps0', 'ps')
     (outdir / 'index.html').write_text(B.full_doc(head(cfg, wcss), web(cfg, content, entries, name)), encoding='utf-8')
+    # same page without <html>/<head>/<body> and with absolute links, for claude.ai Artifacts
+    site = 'https://iamhirad.github.io/economic-/'
+    art = (head(cfg, wcss) + web(cfg, content, entries, name)).replace('href="../', f'href="{site}')
+    art = art.replace(f'href="{cfg["pdf"]}"', f'href="{B.REPO_URL}/blob/{B.BRANCH}/{name}/{cfg["pdf"]}"')
+    (B.OUT / f'{name}-artifact.html').write_text(art, encoding='utf-8')
 
     # print version: no cover, own running header
     pcss = ('@page { @top-left { content: "%s"; } }\n'

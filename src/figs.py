@@ -110,10 +110,10 @@ class Graph:
         self.front.append(f'<line class="ax" x1="{X0:.1f}" y1="{Y0:.1f}" x2="{X0:.1f}" y2="{Y0 + 5:.1f}"/>')
         self.top.append(svg_text(X0, Y0 + 19 + dy, s, cls, 'middle'))
 
-    def ticky(self, y, s, cls='tl'):
+    def ticky(self, y, s, cls='tl', dy=0):
         X0, Y0 = self.X(self.xmin), self.Y(y)
         self.front.append(f'<line class="ax" x1="{X0 - 5:.1f}" y1="{Y0:.1f}" x2="{X0:.1f}" y2="{Y0:.1f}"/>')
-        self.top.append(svg_text(X0 - 9, Y0 + 4.5, s, cls, 'end'))
+        self.top.append(svg_text(X0 - 9, Y0 + 4.5 + dy, s, cls, 'end'))
 
     def dot(self, x, y, cls='dot'):
         self.top.append(f'<circle class="{cls}" cx="{self.X(x):.1f}" cy="{self.Y(y):.1f}" r="4"/>')
@@ -1170,3 +1170,498 @@ FIGS['ps2_gas_supply'] = fig_ps2_gas_supply
 FIGS['ps2_q3'] = fig_ps2_q3
 FIGS['ps2_const_elast'] = fig_ps2_const_elast
 FIGS['ps2_pizza'] = fig_ps2_pizza
+
+
+# ----------------------------------------------------------------------------
+# Problem set 3
+# ----------------------------------------------------------------------------
+def _sm(svg):
+    """Small panel: larger type so labels stay readable when three panels share a row."""
+    return svg.replace('class="g"', 'class="g sm"', 1)
+
+
+def _ps3_q1_panel(pmax, k):
+    g = Graph(2.35, 4.45, w=420, h=392, ml=50, mr=26, mt=36, mb=58)
+    F = 1.5
+    qs = pmax / (1 + pmax / 2)          # equilibrium, P* = Q*
+    qf = 2 * (1 - F / pmax)             # quantity demanded at the floor
+    g.poly([(0, pmax), (0, F), (qf, F)], 'cs')
+    g.poly([(0, 0), (0, F), (qf, F), (qf, qf)], 'ps')
+    g.poly([(qf, F), (qf, qf), (qs, qs)], 'dwl')
+    for a, b, c, d in ((qs, 0, qs, qs), (0, qs, qs, qs), (qf, 0, qf, F), (1.5, 0, 1.5, F)):
+        g.line(a, b, c, d, 'gd', 'mid')
+    g.fn(lambda q: pmax * (1 - q / 2), 0, 2, 'd')
+    g.line(0, 0, 2.22, 2.22, 's')
+    g.line(0, F, 2.08, F, 'cap')
+    xa, xb, yb = g.X(qf), g.X(1.5), g.Y(F) - 9
+    g.arrow((xa + xb) / 2, yb, xa + 1, yb, 'arr2', pixel=True, head=6)
+    g.arrow((xa + xb) / 2, yb, xb - 1, yb, 'arr2', pixel=True, head=6)
+    if k == 1:
+        g.ptext(xa, yb - 26, 'مازاد عرضه', 'tl halo', 'start')
+    else:
+        g.ptext((xa + xb) / 2, yb - 8, 'مازاد عرضه', 'tl halo', 'middle')
+    g.text(2.33, F, 'کف قیمت', 'tm halo', 'end', 0, -8)
+    g.dot(qs, qs, 'dots'); g.dot(1.5, F, 'dotx'); g.dot(qf, F)
+    if k == 1:
+        g.text(0.40, 2.25, 'CS', 'tk'); g.text(0.50, 0.75, 'PS', 'tk'); g.text(1.80, 1.02, 'DWL', 'tw')
+        g.arrow(1.62, 1.12, 1.30, 1.35, 'arr2', head=6)
+        g.ticky(4, '۴'); g.ticky(4 / 3, '۴/۳', dy=4); g.ticky(1.5, '۱٫۵', 'tm', dy=-4)
+        g.tickx(1.25, '۵/۴'); g.tickx(4 / 3, '۴/۳', dy=14); g.tickx(1.5, '۱٫۵'); g.tickx(2, '۲')
+    else:
+        g.text(0.16, 1.60, 'CS', 'tk'); g.text(0.24, 0.72, 'PS', 'tk'); g.text(0.67, 0.92, 'DWL', 'tw')
+        g.ticky(2, '۲'); g.ticky(1, '۱'); g.ticky(1.5, '۱٫۵', 'tm')
+        g.tickx(0.5, '۰٫۵'); g.tickx(1, '۱'); g.tickx(1.5, '۱٫۵'); g.tickx(2, '۲')
+    g.text(0.05, pmax, mi('D', k), 'td', 'start', 8, -4)
+    g.text(2.22, 2.22, mi('S'), 'ts', 'start', 4, -4)
+    return g.svg(f'بازار خودرو در اقتصاد {fa(k)} با کف قیمت')
+
+
+def fig_ps3_q1():
+    return panels((_ps3_q1_panel(4, 1), 'الف) اقتصاد ۱، سن‌آنتونیو (کم‌کشش)'),
+                  (_ps3_q1_panel(2, 2), 'ب) اقتصاد ۲، بوستون (کشش واحد)'))
+
+
+R3 = lambda t: 200 * t - 2 * t * t / 3 if t <= 300 else 0.0     # tax revenue, PS3 Q2
+W3 = lambda t: t * t / 3 if t <= 300 else 30000.0               # deadweight loss, PS3 Q2
+
+
+def fig_ps3_laffer():
+    g = Graph(330, 17500, w=560, h=360, ml=66, mr=34, mt=36, mb=52, xlabel='T', ylabel='درآمد مالیاتی')
+    for x in (100, 200):
+        g.line(x, 0, x, R3(x), 'gd', 'mid')
+    g.line(150, 0, 150, 15000, 'gd', 'mid')
+    g.line(100, R3(100), 200, R3(200), 'gdk', 'mid')
+    g.fn(R3, 0, 300, 'revc', n=150)
+    g.dot(100, R3(100)); g.dot(200, R3(200)); g.dot(150, 15000)
+    g.text(150, 15000, 'بیشینه: ۱۵٬۰۰۰', 'tg halo', 'middle', 0, -12)
+    g.text(150, R3(100), 'درآمد یکسان', 'tl halo', 'middle', 0, 18)
+    g.text(62, 3200, 'ناحیه عادی', 'tb'); g.text(250, 3200, 'ناحیه بازدارنده', 'tb')
+    for x in (50, 100, 150, 200, 250, 300):
+        g.tickx(x, fa(x))
+    for y in (5000, 10000, 15000):
+        g.ticky(y, fa(y))
+    g.ticky(R3(100), fa(13333), dy=3)
+    return g.svg('منحنی لافر بازار سؤال ۲')
+
+
+def fig_ps3_dwl():
+    g = Graph(330, 32500, w=560, h=360, ml=66, mr=34, mt=36, mb=52, xlabel='T', ylabel='زیان رفاهی')
+    g.line(200, 0, 200, R3(200), 'gd', 'mid'); g.line(100, 0, 100, W3(100), 'gd', 'mid')
+    g.line(300, 0, 300, 30000, 'gd', 'mid'); g.line(0, 30000, 300, 30000, 'gd', 'mid')
+    g.fn(R3, 0, 300, 'revd', n=150)
+    g.fn(W3, 0, 300, 'dwlc', n=150)
+    g.dot(100, W3(100)); g.dot(300, 30000); g.dot(200, R3(200))
+    g.text(200, R3(200), 'درآمد = زیان رفاهی', 'tb halo', 'end', -10, -12)
+    g.text(258, W3(258), 'DWL = T²/3', 'tw halo', 'end', -6, -2)
+    g.text(70, R3(70), 'R(T)', 'tg halo', 'middle', 0, -12)
+    g.text(300, 30000, 'کل مازاد اولیه', 'tl halo', 'end', -10, -8)
+    for x in (50, 100, 150, 200, 250, 300):
+        g.tickx(x, fa(x))
+    for y in (10000, 20000, 30000):
+        g.ticky(y, fa(y))
+    g.ticky(W3(100), fa(3333), dy=3); g.ticky(R3(200), fa(13333), dy=-1)
+    return g.svg('زیان رفاهی و درآمد مالیاتی بر حسب مالیات')
+
+
+TAXLAB = dict(W=560, H=420, L=58, R=30, T=36, B=52, XM=330, YM=330)
+
+
+def fig_ps3_taxlab(t=200):
+    """Market of PS3 Q2 with a tax; element ids are updated by the slider script on the page."""
+    c = TAXLAB
+    g = Graph(c['XM'], c['YM'], w=c['W'], h=c['H'], ml=c['L'], mr=c['R'], mt=c['T'], mb=c['B'])
+    q = max(0.0, 200 - 2 * t / 3)
+    ps, pb = q / 2, q / 2 + t
+
+    def poly(pts, cls, i):
+        g.back.append(f'<polygon class="{cls}" id="{i}" points="{" ".join(g.pt(x, y) for x, y in pts)}"/>')
+
+    def pline(pts, cls, i):
+        g.mid.append(f'<polyline class="{cls}" id="{i}" points="{" ".join(g.pt(x, y) for x, y in pts)}"/>')
+    poly([(0, 300), (0, pb), (q, pb)], 'cs', 'mk-cs')
+    poly([(0, ps), (0, pb), (q, pb), (q, ps)], 'rev', 'mk-rev')
+    poly([(0, 0), (0, ps), (q, ps)], 'ps', 'mk-ps')
+    poly([(q, pb), (q, ps), (200, 100)], 'dwl', 'mk-dwl')
+    g.line(200, 0, 200, 100, 'gd', 'mid'); g.line(0, 100, 200, 100, 'gd', 'mid')
+    pline([(0, pb), (q, pb), (q, 0)], 'gdk', 'mk-gb')
+    pline([(0, ps), (q, ps)], 'gdk', 'mk-gs')
+    g.line(0, 300, 300, 0, 'd'); g.line(0, 0, 325, 162.5, 's')
+    g.dot(200, 100, 'dots')
+    g.top.append(f'<circle class="dot" id="mk-db" cx="{g.X(q):.1f}" cy="{g.Y(pb):.1f}" r="4"/>')
+    g.top.append(f'<circle class="dot" id="mk-ds" cx="{g.X(q):.1f}" cy="{g.Y(ps):.1f}" r="4"/>')
+    g.text(300, 0, mi('D'), 'td', 'start', 6, -20)
+    g.text(318, 159, mi('S'), 'ts', 'middle', 0, -10)
+    g.tickx(300, fa(300))
+    x0 = g.X(0)
+    for i, p in (('mk-tb', pb), ('mk-ts', ps)):
+        y = g.Y(p)
+        g.front.append(f'<line class="ax" id="{i}l" x1="{x0 - 5:.1f}" y1="{y:.1f}" x2="{x0:.1f}" y2="{y:.1f}"/>')
+        g.top.append(f'<text class="tb" id="{i}" x="{x0 - 9:.1f}" y="{y + 4.5:.1f}" text-anchor="end" direction="ltr">{fa(round(p, 1))}</text>')
+    xq, y0 = g.X(q), g.Y(0)
+    g.front.append(f'<line class="ax" id="mk-tql" x1="{xq:.1f}" y1="{y0:.1f}" x2="{xq:.1f}" y2="{y0 + 5:.1f}"/>')
+    g.top.append(f'<text class="tb" id="mk-tq" x="{xq:.1f}" y="{y0 + 19:.1f}" text-anchor="middle" direction="ltr">{fa(round(q, 1))}</text>')
+    return g.svg('بازار با مالیات: درآمد مالیاتی، زیان رفاهی و مازادها')
+
+
+def _ps3_q3_frame():
+    return Graph(13600, 13600, w=520, h=400, ml=66, mr=30, mt=36, mb=52, xlabel='تعداد واحد', ylabel='اجاره')
+
+
+def fig_ps3_q3_sub():
+    g = _ps3_q3_frame()
+    g.rect(0, 0, 5000, 5000, 'ps')
+    g.rect(0, 5000, 5000, 7000, 'rev')
+    g.poly([(0, 12000), (0, 7000), (5000, 7000)], 'cs')
+    g.line(0, 10000, 10000, 0, 'k2d'); g.line(0, 12000, 12000, 0, 'd'); g.line(5000, 0, 5000, 13200, 's')
+    g.arrow(8200, 1800, 9200, 2800, 'arr2', head=6)
+    g.dot(5000, 5000, 'dots'); g.dot(5000, 7000)
+    g.text(1650, 8500, 'CS', 'tk')
+    g.text(2500, 6000, 'یارانه: ۱۰ میلیون', 'tg halo', 'middle', 0, 4)
+    g.text(2500, 2500, 'مالکان: ۲۵ میلیون', 'tb')
+    g.text(10000, 0, mi('D'), 'td', 'middle', 2, -20)
+    g.text(12000, 0, mi('D', sup='′'), 'td', 'middle', 4, -20)
+    g.text(5000, 13200, mi('S'), 'ts', 'start', 8, 8)
+    for y in (5000, 7000, 10000, 12000):
+        g.ticky(y, fa(y))
+    for x in (5000, 10000, 12000):
+        g.tickx(x, fa(x))
+    return g.svg('یارانه اجاره با عرضه کاملاً بی‌کشش')
+
+
+def fig_ps3_q3_zon():
+    g = _ps3_q3_frame()
+    g.rect(0, 0, 7000, 3000, 'ps')
+    g.poly([(0, 10000), (0, 3000), (7000, 3000)], 'cs')
+    g.path([(0, 5000), (5000, 5000), (5000, 3000)], 'gdk', 'mid')
+    g.line(5000, 0, 5000, 13200, 'k2s'); g.line(7000, 0, 7000, 13200, 's'); g.line(0, 10000, 10000, 0, 'd')
+    g.arrow(5150, 11800, 6850, 11800, 'arr2', head=6)
+    g.dot(5000, 5000, 'dots'); g.dot(7000, 3000)
+    g.text(1600, 6900, 'CS اولیه', 'tb')
+    g.text(2500, 4000, 'مستأجران قبلی: ۱۰', 'tb halo', 'middle', 0, 4)
+    g.text(5600, 3600, '۲', 'tb')
+    g.text(3500, 1500, 'مالکان: ۲۱ میلیون', 'tb')
+    g.text(10000, 0, mi('D'), 'td', 'middle', 2, -20)
+    g.text(5000, 13200, mi('S'), 'ts', 'end', -8, 8)
+    g.text(7000, 13200, mi('S', sup='′'), 'ts', 'start', 8, 8)
+    for y in (3000, 5000, 10000):
+        g.ticky(y, fa(y))
+    for x in (5000, 7000, 10000):
+        g.tickx(x, fa(x))
+    return g.svg('افزایش عرضه مسکن با اصلاح مقررات منطقه‌بندی')
+
+
+def _ps3_q4(plan):
+    g = Graph(172, 3.4, w=400, h=340, ml=46, mr=26, mt=36, mb=50, xlabel='دقیقه', ylabel='قیمت هر دقیقه')
+    if plan == 'A':
+        g.poly([(0, 3), (0, 0), (150, 0)], 'cs')
+        g.line(0, 3, 150, 0, 'd'); g.dot(150, 0)
+        g.text(42, 1.25, 'ارزش مکالمه: ۲۲۵', 'tb')
+        g.text(42, 0.78, 'منهای آبونمان ۱۲۰', 'tsm')
+        g.text(42, 0.40, 'مازاد خالص: ۱۰۵', 'tg')
+        g.tickx(150, fa(150)); g.ticky(3, fa(3))
+    else:
+        g.poly([(0, 3), (0, 1), (100, 1)], 'cs')
+        g.rect(0, 0, 100, 1, 'rev')
+        g.poly([(100, 1), (100, 0), (150, 0)], 'dwl2')
+        g.line(100, 0, 100, 1, 'gd', 'mid')
+        g.line(0, 1, 165, 1, 'cap'); g.line(0, 3, 150, 0, 'd'); g.dot(100, 1)
+        g.text(30, 1.62, 'CS = ۱۰۰', 'tb'); g.text(50, 0.5, 'پرداخت: ۱۰۰', 'tg'); g.text(116, 0.30, '۲۵', 'tw')
+        g.text(165, 1, 'قیمت = ۱', 'tm halo', 'end', 0, -8)
+        g.tickx(100, fa(100)); g.tickx(150, fa(150)); g.ticky(3, fa(3)); g.ticky(1, fa(1), 'tm')
+    g.text(4, 3, mi('D'), 'td', 'start', 8, -4)
+    return g.svg(f'مازاد مصرف‌کننده با اپراتور {plan}')
+
+
+def fig_ps3_q4():
+    return panels((_ps3_q4('A'), 'الف) اپراتور A: قیمت هر دقیقه صفر'),
+                  (_ps3_q4('B'), 'ب) اپراتور B: قیمت هر دقیقه ۱ دلار'))
+
+
+def fig_ps3_q5():
+    g = Graph(240, 218, w=560, h=400, ml=58, mr=30, mt=36, mb=52, xlabel='تعداد خدمات', ylabel='قیمت')
+    g.rect(0, 20, 180, 100, 'rev2')
+    g.poly([(100, 100), (180, 100), (180, 20)], 'dwl')
+    g.line(100, 0, 100, 100, 'gd', 'mid'); g.line(180, 0, 180, 20, 'gd', 'mid')
+    g.line(0, 100, 228, 100, 's'); g.line(0, 20, 228, 20, 'cap'); g.line(0, 200, 200, 0, 'd')
+    g.dot(100, 100); g.dot(180, 20)
+    g.text(50, 60, 'پرداخت بیمه‌گر از محل حق بیمه', 'tg')
+    g.text(153, 74, 'DWL', 'tw')
+    g.text(3, 100, 'MC = ۱۰۰', 'ts', 'start', 4, -8)
+    g.text(3, 20, 'پرداخت بیمار = ۲۰', 'tm', 'start', 4, 16)
+    g.text(100, 100, 'نقطه کارا', 'tb halo', 'start', 9, -10)
+    g.text(180, 20, 'با بیمه', 'tb halo', 'start', 9, -9)
+    g.text(6, 200, mi('D') + ' = MB', 'td', 'start', 8, -2)
+    g.ticky(20, fa(20), 'tm'); g.ticky(100, fa(100))
+    g.tickx(100, mi('Q', 1)); g.tickx(180, mi('Q', 2))
+    return g.svg('بازار خدمات درمانی با بیمه و زیان رفاهی مصرف مفرط')
+
+
+FIGS['ps3_q1'] = fig_ps3_q1
+FIGS['ps3_laffer'] = fig_ps3_laffer
+FIGS['ps3_dwl'] = fig_ps3_dwl
+FIGS['ps3_taxlab'] = fig_ps3_taxlab
+FIGS['ps3_q3_sub'] = fig_ps3_q3_sub
+FIGS['ps3_q3_zon'] = fig_ps3_q3_zon
+FIGS['ps3_q4'] = fig_ps3_q4
+FIGS['ps3_q5'] = fig_ps3_q5
+
+
+# ----------------------------------------------------------------------------
+# Chapter-5 areas guide. Base market D0/S0 (Q* = 3000, P* = 500); every policy moves
+# quantity by 1000 units, so ceiling 400, floor 600, tax 200 and quota 2000 share one picture.
+# ----------------------------------------------------------------------------
+def _pv(sub, val):
+    """y-axis label such as P_B 600."""
+    return mi('P', sub) + fa(val)
+
+
+def fig_g5_strip():
+    g = Graph(6500, 900, w=560, h=440, ml=66)
+    g.poly([(0, 800), (0, 500), (3000, 500)], 'cs')
+    g.poly([(0, 200), (0, 500), (3000, 500)], 'ps')
+    g.line(3000, 0, 3000, 500, 'gd', 'mid')
+    draw_base(g, label=False)
+    g.text(6000, D0(6000), mi('D'), 'td', 'start', 4, 4); g.text(6000, S0(6000), mi('S'), 'ts', 'start', 4, 4)
+    g.line(1000, 500, 1000, 700, 'stc'); g.line(1000, 300, 1000, 500, 'stp')
+    g.dot(1000, 700); g.dot(1000, 300); g.dot(3000, 500, 'dots')
+    g.text(1060, 712, 'تمایل به پرداخت: ۷۰۰', 'tb halo', 'start')
+    g.text(1060, 250, 'هزینه فروشنده: ۳۰۰', 'tb', 'start')
+    g.text(1080, 560, 'مازاد: ۲۰۰', 'tb', 'start'); g.text(1080, 410, 'مازاد: ۲۰۰', 'tb', 'start')
+    g.text(450, 575, 'CS', 'let'); g.text(450, 425, 'PS', 'let')
+    g.ticky(700, fa(700)); g.ticky(500, mi('P', sup='*') + fa(500)); g.ticky(300, fa(300))
+    g.tickx(1000, fa(1000)); g.tickx(3000, fa(3000))
+    return g.svg('خوانش عمودی مازاد')
+
+
+_G5_REG = {
+    'A': [(0, 800), (0, 600), (2000, 600)],
+    'B': [(0, 500), (0, 600), (2000, 600), (2000, 500)],
+    'C': [(2000, 600), (2000, 500), (3000, 500)],
+    'D': [(0, 400), (0, 500), (2000, 500), (2000, 400)],
+    'E': [(2000, 500), (2000, 400), (3000, 500)],
+    'F': [(0, 200), (0, 400), (2000, 400)],
+}
+_G5_LET = {'A': (667, 667), 'B': (1000, 550), 'C': (2333, 533), 'D': (1000, 450), 'E': (2333, 467), 'F': (667, 333)}
+G5_OWN = {
+    'ceiling': dict(A='cs', B='cs', C='dwl', D='cs', E='dwl2', F='ps'),
+    'floor': dict(A='cs', B='ps', C='dwl', D='ps', E='dwl2', F='ps'),
+    'tax': dict(A='cs', B='rev', C='dwl', D='rev2', E='dwl2', F='ps'),
+    'quota': dict(A='cs', B='rent', C='dwl', D='rent', E='dwl2', F='ps'),
+}
+_G5_NAME = {'ceiling': 'سقف قیمت ۴۰۰', 'floor': 'کف قیمت ۶۰۰', 'tax': 'مالیات ۲۰۰', 'quota': 'سهمیه ۲۰۰۰'}
+
+
+def _g5_six(policy, small=False):
+    g = Graph(5600, 900, w=380, h=330, ml=50, mr=22) if small else Graph(6500, 900, w=560, h=480, ml=70)
+    own = G5_OWN[policy]
+    for k, pts in _G5_REG.items():
+        g.poly(pts, own[k])
+    g.line(0, 500, 3000, 500, 'gdk', 'mid')
+    g.line(2000, 0, 2000, 400, 'gd', 'mid'); g.line(3000, 0, 3000, 500, 'gd', 'mid')
+    xe = 5300 if small else 6000
+    g.fn(D0, 0, xe, 'd'); g.fn(S0, 0, xe, 's')
+    g.text(xe, D0(xe), mi('D'), 'td', 'start', 4, 4); g.text(xe, S0(xe), mi('S'), 'ts', 'start', 4, 4)
+    if policy == 'ceiling':
+        g.line(0, 400, 4300 if small else 5400, 400, 'cap')
+        g.dot(4000, 400, 'dotx')
+        if not small:
+            g.text(5400, 400, 'سقف قیمت = ۴۰۰', 'tm halo', 'end', 0, -8)
+            g.bracket(2000, 4000, 400, 'کمبود ۲٬۰۰۰', dy=14)
+    elif policy == 'floor':
+        g.line(0, 600, 4400 if small else 5600, 600, 'cap')
+        g.dot(4000, 600, 'dotx')
+        if not small:
+            g.text(5600, 600, 'کف قیمت = ۶۰۰', 'tm halo', 'end', 0, 20)
+            g.bracket(2000, 4000, 600, 'مازاد عرضه ۲٬۰۰۰', dy=-36)
+    elif policy == 'tax':
+        g.line(2000, 400, 2000, 600, 'wedge')
+        if not small:
+            g.text(3300, 712, 'گوه مالیات: ۲۰۰', 'tm halo', 'start')
+            g.arrow(3250, 700, 2050, 545, 'arr2', head=6)
+    else:
+        g.line(2000, 0, 2000, 860, 'cap')
+        if not small:
+            g.text(2000, 860, 'سهمیه = ۲٬۰۰۰', 'tm halo', 'start', 8, 4)
+    g.dot(3000, 500, 'dots'); g.dot(2000, 600); g.dot(2000, 400)
+    for k, (x, y) in _G5_LET.items():
+        g.text(x, y, k, 'let', 'middle', 0, 6)
+    g.ticky(600, fa(600)); g.ticky(500, fa(500)); g.ticky(400, fa(400))
+    g.tickx(2000, fa(2000)); g.tickx(3000, fa(3000))
+    if policy in ('ceiling', 'floor') and not small:
+        g.tickx(4000, fa(4000))
+    return g.svg(_G5_NAME[policy])
+
+
+def fig_g5_four():
+    caps = {'ceiling': 'الف) سقف قیمت ۴۰۰', 'floor': 'ب) کف قیمت ۶۰۰', 'tax': 'ج) مالیات ۲۰۰', 'quota': 'د) سهمیه ۲٬۰۰۰'}
+    return panels(*[(_g5_six(p, small=True), caps[p]) for p in ('ceiling', 'floor', 'tax', 'quota')])
+
+
+def _g5_sub_panel(kind):
+    g = Graph(6500, 900, w=300, h=290, ml=46, mr=20, mt=32, mb=40)
+    if kind == 'cs':
+        g.poly([(0, 800), (0, 400), (4000, 400)], 'cs')
+    elif kind == 'ps':
+        g.poly([(0, 200), (0, 600), (4000, 600)], 'ps')
+    else:
+        g.rect(0, 400, 4000, 600, 'rev')
+        g.poly([(3000, 500), (4000, 600), (4000, 400)], 'dwl')
+    g.line(0, 500, 3000, 500, 'gd', 'mid'); g.line(4000, 0, 4000, 600, 'gd', 'mid')
+    g.fn(D0, 0, 6000, 'd'); g.fn(S0, 0, 6000, 's')
+    g.dot(3000, 500, 'dots')
+    if kind == 'cs':
+        g.dot(4000, 400); g.text(1300, 520, 'CS', 'let'); g.ticky(400, mi('P', 'B'), 'tb')
+    elif kind == 'ps':
+        g.dot(4000, 600); g.text(1300, 470, 'PS', 'let'); g.ticky(600, mi('P', 'S'), 'tb')
+    else:
+        g.dot(4000, 400); g.dot(4000, 600); g.text(1600, 515, 'G', 'let')
+        g.ticky(600, mi('P', 'S'), 'tb'); g.ticky(400, mi('P', 'B'), 'tb')
+    g.ticky(500, fa(500)); g.tickx(4000, fa(4000))
+    names = {'cs': 'مازاد مصرف‌کننده با یارانه', 'ps': 'مازاد تولیدکننده با یارانه', 'gov': 'هزینه دولت و زیان رفاهی یارانه'}
+    return _sm(g.svg(names[kind]))
+
+
+def fig_g5_sub3():
+    return panels((_g5_sub_panel('cs'), 'الف) مازاد مصرف‌کننده: ۸۰۰٬۰۰۰'),
+                  (_g5_sub_panel('ps'), 'ب) مازاد تولیدکننده: ۸۰۰٬۰۰۰'),
+                  (_g5_sub_panel('gov'), 'ج) هزینه دولت: ۸۰۰٬۰۰۰')).replace('class="panels"', 'class="panels three"', 1)
+
+
+def fig_g5_sub_split():
+    g = Graph(6500, 900, w=560, h=480, ml=70)
+    g.poly([(0, 400), (0, 500), (3000, 500), (4000, 400)], 'cs')
+    g.poly([(0, 500), (0, 600), (4000, 600), (3000, 500)], 'ps')
+    g.poly([(3000, 500), (4000, 600), (4000, 400)], 'dwl')
+    g.path([(0, 400), (4000, 400), (4000, 600), (0, 600), (0, 400)], 'rectg', 'mid')
+    g.line(0, 500, 3000, 500, 'gdk', 'mid'); g.line(3000, 0, 3000, 500, 'gd', 'mid'); g.line(4000, 0, 4000, 400, 'gd', 'mid')
+    draw_base(g, label=False)
+    g.text(6000, D0(6000), mi('D'), 'td', 'start', 4, 4); g.text(6000, S0(6000), mi('S'), 'ts', 'start', 4, 4)
+    g.line(4000, 400, 4000, 600, 'wedge')
+    g.dot(4000, 400); g.dot(4000, 600); g.dot(3000, 500, 'dots')
+    g.text(1200, 445, 'افزایش CS: ۳۵۰٬۰۰۰', 'tb halo')
+    g.text(1200, 545, 'افزایش PS: ۳۵۰٬۰۰۰', 'tb halo')
+    g.text(4120, 525, 'گوه یارانه: ۲۰۰', 'tm halo', 'start')
+    g.text(4120, 470, 'DWL = ۱۰۰٬۰۰۰', 'tw halo', 'start')
+    g.ticky(600, _pv('S', 600)); g.ticky(500, fa(500)); g.ticky(400, _pv('B', 400))
+    g.tickx(3000, fa(3000)); g.tickx(4000, fa(4000))
+    return g.svg('تقسیم مستطیل هزینه یارانه')
+
+
+def fig_g5_tariff():
+    g = Graph(6500, 900, w=560, h=480, ml=70)
+    g.poly([(0, 800), (0, 400), (4000, 400)], 'cs')
+    g.poly([(0, 300), (0, 400), (2000, 400), (1000, 300)], 'ps')
+    g.poly([(1000, 300), (2000, 400), (2000, 300)], 'dwl')
+    g.rect(2000, 300, 4000, 400, 'rev')
+    g.poly([(4000, 400), (5000, 300), (4000, 300)], 'dwl')
+    g.poly([(0, 200), (0, 300), (1000, 300)], 'ps')
+    for x, y in ((1000, 300), (2000, 300), (4000, 300), (5000, 300)):
+        g.line(x, 0, x, y, 'gd', 'mid')
+    draw_base(g, label=False)
+    g.text(6000, D0(6000), mi('D'), 'td', 'start', 4, 4); g.text(6000, S0(6000), mi('S'), 'ts', 'start', 4, 4)
+    g.line(0, 300, 6400, 300, 'k2s'); g.line(0, 400, 6400, 400, 'cap')
+    g.text(6400, 300, 'قیمت جهانی = ۳۰۰', 'ts halo', 'end', 0, -8)
+    g.text(6400, 400, 'قیمت داخلی با تعرفه = ۴۰۰', 'tm halo', 'end', 0, -8)
+    for k, (x, y) in {'A': (1300, 560), 'B': (700, 350), 'C': (1667, 333), 'D': (3000, 350), 'E': (4333, 333), 'F': (330, 265)}.items():
+        g.text(x, y, k, 'let', 'middle', 0, 6)
+    g.ticky(400, fa(400)); g.ticky(300, fa(300))
+    for x in (1000, 2000, 4000, 5000):
+        g.tickx(x, fa(x))
+    return g.svg('تعرفه در کشور کوچک')
+
+
+def _g5_ext(kind):
+    g = Graph(6500, 1080, w=400, h=380, ml=56, mr=24)
+    if kind == 'neg':
+        g.poly([(0, 200), (3000, 500), (3000, 700), (0, 400)], 'ext')
+        g.poly([(2000, 600), (3000, 700), (3000, 500)], 'dwl')
+        g.line(3000, 0, 3000, 500, 'gd', 'mid'); g.line(2000, 0, 2000, 600, 'gd', 'mid')
+        g.fn(D0, 0, 6000, 'd'); g.fn(S0, 0, 6000, 's'); g.fn(lambda q: 400 + 0.1 * q, 0, 5800, 'k')
+        g.text(6000, D0(6000), 'D = MB', 'td', 'end', 0, -8)
+        g.text(6000, S0(6000), 'S = MPC', 'ts', 'end', 0, 18)
+        g.text(5800, 980, 'MSC', 'tk', 'start', 4, 4)
+        g.text(1000, 395, 'هزینه خارجی', 'tb')
+        g.text(2667, 600, 'DWL', 'tw', 'middle', 0, 4)
+        g.dot(3000, 500, 'dots'); g.dot(2000, 600)
+        g.text(3000, 500, 'بازار', 'tsm halo', 'start', 8, 16); g.text(2000, 600, 'بهینه', 'tsm halo', 'end', -6, -8)
+        g.ticky(700, fa(700)); g.ticky(600, fa(600)); g.ticky(500, fa(500))
+        g.tickx(2000, fa(2000)); g.tickx(3000, fa(3000))
+        return g.svg('پیامد خارجی منفی')
+    g.poly([(0, 800), (3000, 500), (3000, 700), (0, 1000)], 'ext')
+    g.poly([(3000, 700), (4000, 600), (3000, 500)], 'dwl')
+    g.line(3000, 0, 3000, 500, 'gd', 'mid'); g.line(4000, 0, 4000, 600, 'gd', 'mid')
+    g.fn(D0, 0, 6000, 'd'); g.fn(S0, 0, 6000, 's'); g.fn(lambda q: 1000 - 0.1 * q, 0, 6000, 'k')
+    g.text(6000, D0(6000), 'D = MPB', 'td', 'end', 0, -8)
+    g.text(6000, S0(6000), 'S = MC', 'ts', 'end', 0, -8)
+    g.text(6000, 400, 'MSB', 'tk', 'start', 4, 4)
+    g.text(1000, 795, 'منفعت خارجی', 'tb')
+    g.text(3333, 600, 'DWL', 'tw', 'middle', 0, 4)
+    g.dot(3000, 500, 'dots'); g.dot(4000, 600)
+    g.text(3000, 500, 'بازار', 'tsm halo', 'end', -6, 16); g.text(4000, 600, 'بهینه', 'tsm halo', 'start', 8, -6)
+    g.ticky(700, fa(700)); g.ticky(600, fa(600)); g.ticky(500, fa(500))
+    g.tickx(3000, fa(3000)); g.tickx(4000, fa(4000))
+    return g.svg('پیامد خارجی مثبت')
+
+
+def fig_g5_ext():
+    return panels((_g5_ext('neg'), 'الف) هزینه خارجی ۲۰۰: بازار ۳۰۰۰ تولید می‌کند، بهینه ۲۰۰۰ است'),
+                  (_g5_ext('pos'), 'ب) منفعت خارجی ۲۰۰: بازار ۳۰۰۰ تولید می‌کند، بهینه ۴۰۰۰ است'))
+
+
+def _g5_edge(kind):
+    g = Graph(6500, 900, w=380, h=330, ml=54, mr=22)
+    if kind == 'vd':      # perfectly inelastic demand at Q = 3000
+        g.rect(0, 500, 3000, 700, 'rev'); g.poly([(0, 200), (0, 500), (3000, 500)], 'ps')
+        g.line(3000, 0, 3000, 880, 'd'); g.fn(S0, 0, 6000, 's'); g.line(3000, 500, 3000, 700, 'wedge')
+        g.dot(3000, 700); g.dot(3000, 500, 'dots')
+        g.text(1500, 600, 'R', 'let', 'middle', 0, 6); g.text(900, 420, 'PS', 'tk')
+        g.text(3000, 860, 'CS: نامحدود', 'tl', 'start', 8, 0)
+        g.text(3000, 880, mi('D'), 'td', 'end', -6, 10); g.text(6000, S0(6000), mi('S'), 'ts', 'start', 4, 4)
+        g.ticky(700, _pv('B', 700), 'tb'); g.ticky(500, fa(500)); g.tickx(3000, fa(3000))
+    elif kind == 'hd':    # perfectly elastic demand at P = 500
+        g.rect(0, 300, 1000, 500, 'rev'); g.poly([(1000, 500), (3000, 500), (1000, 300)], 'dwl')
+        g.poly([(0, 200), (0, 300), (1000, 300)], 'ps')
+        g.line(0, 500, 6000, 500, 'd'); g.fn(S0, 0, 6000, 's'); g.line(1000, 300, 1000, 500, 'wedge')
+        g.line(3000, 0, 3000, 500, 'gd', 'mid'); g.line(1000, 0, 1000, 300, 'gd', 'mid')
+        g.dot(1000, 300); g.dot(3000, 500, 'dots')
+        g.text(500, 400, 'R', 'let', 'middle', 0, 6); g.text(1700, 440, 'DWL', 'tw')
+        g.text(6000, 500, mi('D'), 'td', 'start', 4, 4); g.text(6000, S0(6000), mi('S'), 'ts', 'start', 4, 4)
+        g.ticky(500, fa(500)); g.ticky(300, _pv('S', 300), 'tb'); g.tickx(1000, fa(1000)); g.tickx(3000, fa(3000))
+    elif kind == 'vs':    # perfectly inelastic supply at Q = 3000
+        g.poly([(0, 800), (0, 500), (3000, 500)], 'cs'); g.rect(0, 300, 3000, 500, 'rev'); g.rect(0, 0, 3000, 300, 'ps')
+        g.line(3000, 0, 3000, 880, 's'); g.fn(D0, 0, 6000, 'd'); g.line(3000, 300, 3000, 500, 'wedge')
+        g.dot(3000, 300); g.dot(3000, 500, 'dots')
+        g.text(800, 580, 'CS', 'tk'); g.text(1500, 400, 'R', 'let', 'middle', 0, 6); g.text(1500, 150, 'PS', 'tk')
+        g.text(3000, 880, mi('S'), 'ts', 'start', 6, 10); g.text(6000, D0(6000), mi('D'), 'td', 'start', 4, 4)
+        g.ticky(500, fa(500)); g.ticky(300, _pv('S', 300), 'tb'); g.tickx(3000, fa(3000))
+    else:                 # perfectly elastic supply at P = 500
+        g.poly([(0, 800), (0, 700), (1000, 700)], 'cs'); g.rect(0, 500, 1000, 700, 'rev')
+        g.poly([(1000, 700), (1000, 500), (3000, 500)], 'dwl')
+        g.line(0, 500, 6000, 500, 's'); g.fn(D0, 0, 6000, 'd'); g.line(1000, 500, 1000, 700, 'wedge')
+        g.line(3000, 0, 3000, 500, 'gd', 'mid'); g.line(1000, 0, 1000, 500, 'gd', 'mid')
+        g.dot(1000, 700); g.dot(3000, 500, 'dots')
+        g.text(330, 735, 'CS', 'tk'); g.text(500, 600, 'R', 'let', 'middle', 0, 6); g.text(1700, 560, 'DWL', 'tw')
+        g.text(6000, 500, mi('S'), 'ts', 'start', 4, 4); g.text(6000, D0(6000), mi('D'), 'td', 'start', 4, 4)
+        g.ticky(700, _pv('B', 700), 'tb'); g.ticky(500, fa(500)); g.tickx(1000, fa(1000)); g.tickx(3000, fa(3000))
+    names = {'vd': 'تقاضای کاملاً بی‌کشش', 'hd': 'تقاضای کاملاً باکشش', 'vs': 'عرضه کاملاً بی‌کشش', 'hs': 'عرضه کاملاً باکشش'}
+    return g.svg('مالیات ۲۰۰ با ' + names[kind])
+
+
+def fig_g5_edges():
+    return panels((_g5_edge('vd'), 'الف) تقاضای کاملاً بی‌کشش: کل مالیات با خریدار، زیان رفاهی صفر'),
+                  (_g5_edge('hd'), 'ب) تقاضای کاملاً باکشش: کل مالیات با فروشنده، زیان رفاهی ۲۰۰٬۰۰۰'),
+                  (_g5_edge('vs'), 'ج) عرضه کاملاً بی‌کشش: کل مالیات با فروشنده، زیان رفاهی صفر'),
+                  (_g5_edge('hs'), 'د) عرضه کاملاً باکشش: کل مالیات با خریدار، زیان رفاهی ۲۰۰٬۰۰۰'))
+
+
+FIGS['g5_strip'] = fig_g5_strip
+FIGS['g5_ceiling'] = lambda: _g5_six('ceiling')
+FIGS['g5_floor'] = lambda: _g5_six('floor')
+FIGS['g5_tax'] = lambda: _g5_six('tax')
+FIGS['g5_quota'] = lambda: _g5_six('quota')
+FIGS['g5_four'] = fig_g5_four
+FIGS['g5_sub3'] = fig_g5_sub3
+FIGS['g5_sub_split'] = fig_g5_sub_split
+FIGS['g5_tariff'] = fig_g5_tariff
+FIGS['g5_ext'] = fig_g5_ext
+FIGS['g5_edges'] = fig_g5_edges

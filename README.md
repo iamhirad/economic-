@@ -6,6 +6,8 @@
 - **نسخه وب:** https://iamhirad.github.io/economic-/ (با فهرست کناری، حالت تیره، و پاسخ‌های بازشونده)
 - **پاسخ تمرین سری اول:** https://iamhirad.github.io/economic-/ps01/ ([PDF](ps01/ps01-pasokh.pdf))
 - **پاسخ تمرین سری دوم:** https://iamhirad.github.io/economic-/ps02/ ([PDF](ps02/ps02-pasokh.pdf))
+- **پاسخ تمرین سری سوم:** https://iamhirad.github.io/economic-/ps03/ ([PDF](ps03/ps03-pasokh.pdf))
+- **راهنمای مساحت‌های فصل ۵:** https://iamhirad.github.io/economic-/fasl5-masahat/ ([PDF](fasl5-masahat/fasl5-masahat.pdf)) · محاسبه مازاد مصرف‌کننده و تولیدکننده، سهم دولت و زیان رفاهی در همه سیاست‌های فصل ۵ و حالت‌های کاملاً بی‌کشش و کاملاً باکشش
 
 ## محتوا
 
@@ -34,5 +36,7 @@ npm install                 # KaTeX برای فرمول‌ها
 pip install pypdf
 python3 build.py --pdf      # index.html و PDF جزوه را می‌سازد (به Playwright/Chromium نیاز دارد)
 python3 build_ps.py ps02    # صفحه و PDF پاسخ تمرین سری دوم (منبع: src/ps/ps02.html)
+python3 build_ps.py ps03    # پاسخ تمرین سری سوم (منبع: src/ps/ps03.html)
+python3 build_ps.py fasl5-masahat  # راهنمای مساحت‌های فصل ۵ (منبع: src/guides/fasl5-masahat.html)
 python3 build_ps.py --no-pdf  # فقط صفحه‌های وب همه تمرین‌ها (بدون ساخت دوباره PDF)
 ```
